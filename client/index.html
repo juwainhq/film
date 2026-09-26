@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroFilm Color &amp; Cinematic Effects</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <svg class="brand-icon" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                    <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+                    <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+                    <circle cx="6" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="18" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+                <span class="brand-title">RetroFilm <span class="brand-badge">PPRO CEP</span></span>
+            </div>
+            
+            <div class="header-controls">
+                <button id="masterToggleBtn" class="power-toggle-btn active" title="Toggle Master Look On/Off">
+                    <span class="power-dot"></span>
+                    <span class="power-text">EFFECT: ACTIVE</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Premiere Pro Host Status Bar -->
+        <div class="host-status-bar">
+            <div class="host-info">
+                <span class="status-indicator"></span>
+                <span id="hostStatusText">Connecting to Premiere Pro...</span>
+            </div>
+            <div class="host-tools">
+                <button id="openConsoleBtn" class="icon-btn" title="View ExtendScript Log Console">⚙ Console</button>
+            </div>
+        </div>
+
+        <!-- Real-Time WebGL Preview Viewport -->
+        <div class="preview-container">
+            <div id="viewportWrapper" class="viewport-wrapper">
+                <canvas id="renderCanvas" width="1280" height="720"></canvas>
+                
+                <!-- Split A/B Handle -->
+                <div id="splitHandle" class="split-handle">
+                    <div class="split-handle-button">↔</div>
+                </div>
+
+                <!-- Overlay Badges -->
+                <div id="badgeLeft" class="viewport-badge badge-left" style="display: none;">ORIGINAL</div>
+                <div id="badgeRight" class="viewport-badge badge-right" style="display: none;">RETROFILM</div>
+            </div>
+
+            <!-- Viewport Toolbar -->
+            <div class="viewport-toolbar">
+                <div class="toolbar-group">
+                    <select id="footageSelect" class="footage-select" title="Switch Preview Footage">
+                        <option value="neon-city">🎬 Scene: Neon City Night</option>
+                        <option value="golden-hour">🌅 Scene: Golden Sunset</option>
+                        <option value="studio-portrait">👤 Scene: Studio Rim Light</option>
+                        <option value="high-contrast">🏁 Scene: Calibration Chart</option>
+                        <option value="custom_file">📁 Upload Custom Media...</option>
+                    </select>
+                    <input type="file" id="fileUploadInput" accept="image/*,video/*" style="display: none;">
+                </div>
+
+                <div class="toolbar-group">
+                    <button id="captureFrameBtn" class="tool-btn" title="Capture active sequence playhead frame from Premiere Pro">
+                        📸 From Timeline
+                    </button>
+                    <button id="splitToggleBtn" class="tool-btn" title="Toggle A/B Split Screen Comparison">
+                        🌓 Split A/B
+                    </button>
+                    <button id="playPauseBtn" class="tool-btn active" title="Toggle 24fps Grain Motion Animation">
+                        ▶ Grain Motion
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Presets Selection Bar -->
+        <div class="presets-section">
+            <div class="presets-row">
+                <select id="presetSelect" class="preset-dropdown" title="Select Look Preset">
+                    <!-- Options populated dynamically -->
+                </select>
+                <button id="savePresetBtn" class="tool-btn" title="Save current parameters as custom preset">
+                    💾 Save Look
+                </button>
+            </div>
+            <div id="presetDesc" class="preset-desc">Gentle organic 35mm grain, delicate highlight bloom, subtle warm edge halation.</div>
+        </div>
+
+        <!-- Effect Controls Accordions -->
+        <div class="controls-container">
+
+            <!-- 1. FILM GRAIN SECTION -->
+            <div class="accordion-card open" id="grainCard">
+                <div class="accordion-header">
+                    <div class="header-left">
+                        <span class="accordion-icon">🎞️</span>
+                        <span class="accordion-title">Film Grain</span>
+                    </div>
+                    <div class="header-right">
+                        <label class="switch-label" title="Enable/Disable Film Grain">
+                            <input type="checkbox" id="grainToggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body">
+                    <!-- Amount Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Amount (Intensity)</span>
+                            <span id="grainAmountVal" class="control-value">0.22</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="grainAmount" min="0.0" max="1.0" step="0.01" value="0.22">
+                        </div>
+                    </div>
+
+                    <!-- Size Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Grain Size</span>
+                            <span id="grainSizeVal" class="control-value">1.0x</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="grainSize" min="0.5" max="3.0" step="0.1" value="1.0">
+                        </div>
+                    </div>
+
+                    <!-- Roughness Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Roughness (Clumping)</span>
+                            <span id="grainRoughnessVal" class="control-value">25%</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="grainRoughness" min="0.0" max="1.0" step="0.01" value="0.25">
+                        </div>
+                    </div>
+
+                    <!-- Grain Mode -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Grain Mode</span>
+                        </div>
+                        <div class="segmented-control">
+                            <button type="button" class="segment-btn grain-type-btn active" data-type="mono">Monochrome (Silver)</button>
+                            <button type="button" class="segment-btn grain-type-btn" data-type="color">RGB Dye Clouds</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. HALATION SECTION -->
+            <div class="accordion-card open" id="halationCard">
+                <div class="accordion-header">
+                    <div class="header-left">
+                        <span class="accordion-icon">🔴</span>
+                        <span class="accordion-title">Halation</span>
+                    </div>
+                    <div class="header-right">
+                        <label class="switch-label" title="Enable/Disable Halation">
+                            <input type="checkbox" id="halationToggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body">
+                    <!-- Threshold Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Threshold (Highlight Cutoff)</span>
+                            <span id="halationThresholdVal" class="control-value">0.72</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="halationThreshold" min="0.0" max="1.0" step="0.01" value="0.72">
+                        </div>
+                    </div>
+
+                    <!-- Radius Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Spread Radius</span>
+                            <span id="halationRadiusVal" class="control-value">8px</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="halationRadius" min="1" max="40" step="1" value="8">
+                        </div>
+                    </div>
+
+                    <!-- Intensity Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Intensity (Glow Bleed)</span>
+                            <span id="halationIntensityVal" class="control-value">0.30</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="halationIntensity" min="0.0" max="1.0" step="0.01" value="0.30">
+                        </div>
+                    </div>
+
+                    <!-- Color Tint Picker -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Halation Color Tint</span>
+                        </div>
+                        <div class="tint-selector-row">
+                            <input type="color" id="halationColorPicker" class="color-swatch-picker" value="#ff4500">
+                            <div class="preset-swatches">
+                                <button type="button" class="swatch-btn" style="background: #ff3b1d;" data-color="#ff3b1d" title="Kodak Red-Orange"></button>
+                                <button type="button" class="swatch-btn" style="background: #ff5500;" data-color="#ff5500" title="Warm Amber"></button>
+                                <button type="button" class="swatch-btn" style="background: #e60039;" data-color="#e60039" title="Deep Ruby"></button>
+                                <button type="button" class="swatch-btn" style="background: #ff007f;" data-color="#ff007f" title="Neon Magenta"></button>
+                                <button type="button" class="swatch-btn" style="background: #ffaa00;" data-color="#ffaa00" title="Golden Flare"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. BLOOM SECTION -->
+            <div class="accordion-card open" id="bloomCard">
+                <div class="accordion-header">
+                    <div class="header-left">
+                        <span class="accordion-icon">✨</span>
+                        <span class="accordion-title">Bloom (Highlight Diffusion)</span>
+                    </div>
+                    <div class="header-right">
+                        <label class="switch-label" title="Enable/Disable Bloom">
+                            <input type="checkbox" id="bloomToggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body">
+                    <!-- Threshold Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Threshold</span>
+                            <span id="bloomThresholdVal" class="control-value">0.75</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="bloomThreshold" min="0.0" max="1.0" step="0.01" value="0.75">
+                        </div>
+                    </div>
+
+                    <!-- Radius Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Diffusion Radius</span>
+                            <span id="bloomRadiusVal" class="control-value">20px</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="bloomRadius" min="5" max="70" step="1" value="20">
+                        </div>
+                    </div>
+
+                    <!-- Intensity Slider -->
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Intensity</span>
+                            <span id="bloomIntensityVal" class="control-value">0.25</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="bloomIntensity" min="0.0" max="1.0" step="0.01" value="0.25">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. FILM FINISHING & TONE (COLLAPSED BY DEFAULT) -->
+            <div class="accordion-card" id="toneCard">
+                <div class="accordion-header">
+                    <div class="header-left">
+                        <span class="accordion-icon">🎨</span>
+                        <span class="accordion-title">Tone &amp; Film Finishing</span>
+                    </div>
+                    <div class="header-right">
+                        <span class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div class="accordion-body">
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Contrast (Filmic S-Curve)</span>
+                            <span id="toneContrastVal" class="control-value">1.06</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="toneContrast" min="0.5" max="1.8" step="0.01" value="1.06">
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Saturation</span>
+                            <span id="toneSaturationVal" class="control-value">1.04</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="toneSaturation" min="0.0" max="2.0" step="0.01" value="1.04">
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Color Temperature (Warmth)</span>
+                            <span id="toneTempVal" class="control-value">+0.04</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="toneTemp" min="-0.5" max="0.5" step="0.01" value="0.04">
+                        </div>
+                    </div>
+
+                    <div class="control-row">
+                        <div class="control-label-row">
+                            <span>Lens Vignette</span>
+                            <span id="toneVignetteVal" class="control-value">10%</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="toneVignette" min="0.0" max="1.0" step="0.01" value="0.10">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Premiere Pro Action Bar -->
+        <div class="bottom-action-bar">
+            <div class="action-row">
+                <button id="applyToClipBtn" class="btn-primary" title="Apply this grade directly to the currently selected clip on the Premiere Pro timeline">
+                    <span>★ Apply to Active Clip</span>
+                </button>
+            </div>
+            <div class="action-row">
+                <button id="addAdjustmentBtn" class="btn-secondary" title="Add a dedicated Adjustment Layer with this effect stack">
+                    <span>➕ New Adjustment Layer</span>
+                </button>
+                <button id="exportLutBtn" class="btn-secondary" title="Export current look as a 3D LUT (.cube) file">
+                    <span>⬇ Export .CUBE LUT</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- ExtendScript Console & Diagnostics Modal -->
+    <div id="consoleModal" class="modal-backdrop">
+        <div class="modal-window">
+            <div class="modal-header">
+                <span>ExtendScript Host Console</span>
+                <button id="closeConsoleBtn" class="icon-btn">✕</button>
+            </div>
+            <pre id="consoleOutput" class="modal-content"></pre>
+        </div>
+    </div>
+
+    <!-- Scripts Loading -->
+    <script src="js/lib/CSInterface.js"></script>
+    <script src="js/engine/shaders.js"></script>
+    <script src="js/engine/webgl-renderer.js"></script>
+    <script src="js/engine/canvas-fallback-renderer.js"></script>
+    <script src="js/engine/sample-generator.js"></script>
+    <script src="js/engine/lut-generator.js"></script>
+    <script src="js/presets.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
