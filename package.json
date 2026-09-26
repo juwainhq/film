@@ -1,0 +1,24 @@
+{
+  "name": "retrofilm-premiere-extension",
+  "version": "1.0.0",
+  "description": "Adobe Premiere Pro CEP extension panel for retro and cinematic color grading, halation, bloom, and film grain.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-suite.js"
+  },
+  "keywords": [
+    "adobe",
+    "premiere-pro",
+    "cep",
+    "extendscript",
+    "color-grading",
+    "halation",
+    "bloom",
+    "film-grain",
+    "lut",
+    "webgl"
+  ],
+  "author": "RetroFilm Development Team",
+  "license": "MIT"
+}
